@@ -1,0 +1,12 @@
+---
+- name: Create a VM with nginx for a website
+  hosts: rhel
+  become: false
+  tasks:
+    - name: Update all packages to latest
+
+    - name: Install nginx
+
+    - name: Set https allow firewall rule
+
+    - name: Enable nginx service
