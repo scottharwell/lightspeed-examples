@@ -1,5 +1,5 @@
 ---
-- name: Create a VM with nginx for a website
+- name: Install and enable nginx for a website
   hosts: rhel
   become: false
   tasks:
