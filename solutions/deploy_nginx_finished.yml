@@ -1,0 +1,26 @@
+---
+- name: Install and enable nginx for a website
+  hosts: rhel
+  become: true
+  tasks:
+    - name: Update all packages to latest
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+
+    - name: Install nginx
+      ansible.builtin.package:
+        name: nginx
+        state: present
+
+    - name: Set https allow firewall rule
+      ansible.posix.firewalld:
+        service: https
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Enable nginx service
+      ansible.builtin.service:
+        name: nginx
+        enabled: true
