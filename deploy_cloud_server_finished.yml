@@ -1,0 +1,72 @@
+---
+- name: Deploy EC2 Instance
+  hosts: localhost
+  become: false
+  vars:
+    region: us-east-1
+    image_id: ami-123456
+    vpc_id: vpc-12345
+    vpc_subnet_id: subnet-12345
+    key_name: key-12345
+    instance_type: t2.micro
+    aws_access_key: "{{ lookup('env', 'ACCESS_KEY') }}"
+  tasks:
+    - name: Create a security group to allow https
+      amazon.aws.ec2_security_group:
+        name: sg
+        description: Ansible Security Group
+        region: "{{ region }}"
+        vpc_id: "{{ vpc_id }}"
+        rules:
+          - proto: tcp
+            ports:
+              - 443
+            cidr_ip: 0.0.0.0/0
+      register: ws_sg
+
+    - name: Create an EC2 instance
+      amazon.aws.ec2_instance:
+        region: "{{ region }}"
+        name: Ansible Integration Test
+        vpc_subnet_id: "{{ vpc_subnet_id }}"
+        image_id: "{{ image_id }}"
+        instance_type: "{{ instance_type }}"
+        security_group: "{{ security_group }}"
+        key_name: "{{ key_name }}"
+        network:
+          assign_public_ip: true
+        wait: true
+        count: 1
+        aws_access_key: "{{ aws_access_key }}"
+      register: ec2
+
+    - name: Add host to group
+      ansible.builtin.add_host:
+        hostname: "{{ ec2.instances[0].ip }}"
+        groupname: rhel
+
+- name: Install and enable nginx for a website
+  hosts: rhel
+  become: true
+  tasks:
+    - name: Update all packages to latest
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+
+    - name: Install nginx
+      ansible.builtin.package:
+        name: nginx
+        state: present
+
+    - name: Set https allow firewall rule
+      ansible.posix.firewalld:
+        service: https
+        permanent: true
+        state: enabled
+
+    - name: Enable nginx service
+      ansible.builtin.service:
+        name: nginx
+        enabled: true
+        state: restarted

@@ -1,12 +1,12 @@
 ---
 - name: Install and enable nginx for a website
   hosts: rhel
-  become: false
+  become: true
   tasks:
-    - name: Update all packages to latest
+    # - name: Update all packages to latest
 
-    - name: Install nginx
+    # - name: Install nginx
 
-    - name: Set https allow firewall rule
+    # - name: Set https allow firewall rule
 
-    - name: Enable nginx service
+    # - name: Enable nginx service
