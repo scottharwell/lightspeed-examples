@@ -3,7 +3,7 @@
   hosts: rhel
   become: true
   tasks:
-    # - name: Update all packages to latest
+    - name: Update all packages to latest
 
     # - name: Install nginx
 

@@ -10,40 +10,50 @@
     key_name: key-12345
     instance_type: t2.micro
     aws_access_key: "{{ lookup('env', 'ACCESS_KEY') }}"
+    aws_secret_key: "{{ lookup('env', 'SECRET_KEY') }}"
   tasks:
     - name: Create a security group to allow https
       amazon.aws.ec2_security_group:
-        name: sg
-        description: Ansible Security Group
-        region: "{{ region }}"
-        vpc_id: "{{ vpc_id }}"
+        name: webserver-security-group
+        description: Security Group for Webserver
+        region: us-east-1
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
         rules:
           - proto: tcp
-            ports:
-              - 443
+            from_port: 22
+            to_port: 22
             cidr_ip: 0.0.0.0/0
-      register: ws_sg
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 443
+            to_port: 443
+            cidr_ip: 0.0.0.0/0
+      register: sec_grp
 
     - name: Create an EC2 instance
       amazon.aws.ec2_instance:
-        region: "{{ region }}"
-        name: Ansible Integration Test
-        vpc_subnet_id: "{{ vpc_subnet_id }}"
-        image_id: "{{ image_id }}"
-        instance_type: "{{ instance_type }}"
-        security_group: "{{ security_group }}"
+        name: EC2 Instance
         key_name: "{{ key_name }}"
+        region: "{{ region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        instance_type: t2.micro
+        security_group: webserver-security-group
+        image_id: "{{ image_id }}"
+        wait: true
+        vpc_subnet_id: "{{ vpc_subnet_id }}"
         network:
           assign_public_ip: true
-        wait: true
-        count: 1
-        aws_access_key: "{{ aws_access_key }}"
       register: ec2
 
-    - name: Add host to group
+    - name: Add host to group named rhel
       ansible.builtin.add_host:
-        hostname: "{{ ec2.instances[0].ip }}"
-        groupname: rhel
+        hostname: "{{ ec2.public_ip }}"
+        groups: rhel
 
 - name: Install and enable nginx for a website
   hosts: rhel
@@ -59,14 +69,15 @@
         name: nginx
         state: present
 
-    - name: Set https allow firewall rule
+    - name: Set https allow firewalld rule
       ansible.posix.firewalld:
-        service: https
+        port: 443/tcp
         permanent: true
         state: enabled
+        immediate: true
 
     - name: Enable nginx service
       ansible.builtin.service:
         name: nginx
+        state: started
         enabled: true
-        state: restarted
