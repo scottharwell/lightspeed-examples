@@ -1,0 +1,31 @@
+---
+- name: Deploy Swingsite golf metrics application server
+  hosts: localhost
+  become: false
+  vars:
+    region: us-east-1
+    image_id: ami-123456
+    vpc_id: vpc-12345
+    vpc_subnet_id: subnet-12345
+    key_name: key-12345
+    instance_type: t2.micro
+    aws_access_key: "{{ lookup('env', 'ACCESS_KEY') }}"
+    aws_secret_key: "{{ lookup('env', 'SECRET_KEY') }}"
+  tasks:
+    - name: Create a security group to allow https
+
+    # - name: Create an EC2 instance
+
+    # - name: Add host to group named rhel
+
+- name: Install and enable nginx for a website
+  hosts: rhel
+  become: true
+  tasks:
+    # - name: Update all packages to latest
+
+    # - name: Install nginx
+
+    # - name: Set https allow firewalld rule
+
+    # - name: Enable nginx service
